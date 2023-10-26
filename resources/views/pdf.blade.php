@@ -113,7 +113,7 @@
     <img class="logo" src="lib/img/logo_png.png" alt="">
     <div class="content-titulo">
         {{-- <h5>IMPORTACIONES CLIO NICARAGUA <br> Delicias del Volga, 1c. Abajo, 1&#189;C. al Sur, casa #403 <br> 81562409784214465</h5> --}}
-        <h5>KATRINA VARIEDADES <br> Delicias del Volga, 1c. Abajo, 1&#189;C. al Sur, casa #403 <br> Teléfonos: 8765-5719 / 8422-0032</h5>
+        <h5>PRO COSMETIC 505 <br> Delicias del Volga, 1c. Abajo, 1&#189;C. al Sur, casa #403 <br> Teléfonos: 8765-5719 / 8422-0032</h5>
     </div>
     <div class="border">
         <div class="seccion_supeior">

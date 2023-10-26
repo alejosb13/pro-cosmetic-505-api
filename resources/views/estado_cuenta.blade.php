@@ -119,7 +119,7 @@
     @foreach($data['estado_cuenta'] as $key => $historico)
     <h6 style="float: right">Pagina {{ $key + 1 }} de {{ count($data['estado_cuenta']) }} </h6>
     <img class="logo" src="lib/img/logo_png.png" alt="">
-    <h5 style="text-align: center;">KATRINA VARIEDADES <br> Delicias del Volga, 1c. Abajo, 1&#189;C. al Sur, casa #403 <br> Teléfonos: 8765-5719 / 8422-0032</h5>
+    <h5 style="text-align: center;">PRO COSMETIC 505 <br> Delicias del Volga, 1c. Abajo, 1&#189;C. al Sur, casa #403 <br> Teléfonos: 8765-5719 / 8422-0032</h5>
     </div>
     <div class="border">
         <div class="seccion_supeior">
