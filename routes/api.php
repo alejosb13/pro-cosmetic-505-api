@@ -13,6 +13,7 @@ use App\Http\Controllers\FacturaDetallesController;
 use App\Http\Controllers\FacturaHistorial;
 use App\Http\Controllers\FrecuenciaController;
 use App\Http\Controllers\FrecuenciasFacturasController;
+use App\Http\Controllers\IncentivoHistorialController;
 use App\Http\Controllers\ListadosPaginasController;
 use App\Http\Controllers\LogisticaController;
 use App\Http\Controllers\MetasController;
@@ -126,6 +127,8 @@ Route::group(['middleware' => ['auth:sanctum', 'role:administrador|vendedor|supe
     
     Route::resource('factura-detalle', FacturaDetallesController::class);
     
+    Route::resource('incentivos', IncentivoHistorialController::class);
+    
     Route::resource('facturas', FacturaController::class);
     Route::put('facturas/despachar/{id}', [FacturaController::class, 'despachar']);
     Route::put('facturas/entregada/{id}', [FacturaController::class, 'entregada']);
@@ -168,7 +171,7 @@ Route::get('list/productos-clientes', [ListadosPaginasController::class, 'Factur
 Route::get('list/producto-vendedor', [ListadosPaginasController::class, 'ProductosVendedorList']);
 
 Route::get('configuracion/crons', function () {
-    // Artisan::call('meta:recuperacion');
+    Artisan::call('meta:recuperacion');
     // echo Artisan::output();
 });
 Route::get('configuracion/clear-cache', function () {

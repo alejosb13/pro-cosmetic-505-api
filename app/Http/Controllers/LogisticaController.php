@@ -7,6 +7,7 @@ use App\Models\Cliente;
 use App\Models\ClientesReactivados;
 use App\Models\Factura;
 use App\Models\Frecuencia;
+use App\Models\IncentivosHistorial;
 use App\Models\Producto;
 use App\Models\Recibo;
 use App\Models\User;
@@ -104,10 +105,9 @@ class LogisticaController extends Controller
 
                     if ($saldoCliente < 0) {
                         // $recibo_historial->saldo_cliente = number_format((float) str_replace("-", "", $saldoCliente), 2);
-                            
+
                         $saldo_sin_guion = str_replace("-", "", $saldoCliente);
                         $recibo_historial->saldo_cliente = decimal(filter_var($saldo_sin_guion, FILTER_SANITIZE_NUMBER_FLOAT, FILTER_FLAG_ALLOW_FRACTION));
-                        
                     }
 
                     if ($recibo_historial->factura_historial->metodo_pago) {
@@ -393,6 +393,7 @@ class LogisticaController extends Controller
             'total_contado' => 0,
             'total_credito' => 0,
             'porcentaje20' => 0,
+            'porcentaje' =>  0.18,
             'total' => 0,
         ];
 
@@ -439,7 +440,7 @@ class LogisticaController extends Controller
                     $reciboHistorial = $reciboHistorial->where('numero', '>=', $request->numRecibo);
                 }
             }
-
+            // print_r(json_encode(['created_at', [$dateIni->toDateString() . " 00:00:00",  $dateFin->toDateString() . " 23:59:59"]]));
             $recibo->recibo_historial = $reciboHistorial->get();
 
             if (count($recibo->recibo_historial) > 0) {
@@ -456,9 +457,22 @@ class LogisticaController extends Controller
                     if ($recibo_historial->factura_historial->metodo_pago) {
                         $recibo_historial->factura_historial->metodo_pago->tipoPago = $recibo_historial->factura_historial->metodo_pago->getTipoPago();
                     }
-
                     if ($recibo_historial->factura_historial) {
-                        $response["total_contado"] += $recibo_historial->factura_historial->precio;
+                        $fechaCreacionAbono = $recibo_historial->factura_historial->created_at;
+                        $inicioMesActual =  Carbon::parse($fechaCreacionAbono)->firstOfMonth()->toDateString();
+                        $finMesActual =  Carbon::parse($fechaCreacionAbono)->lastOfMonth()->toDateString();
+                        // print_r(json_encode($fechaCreacionAbono));
+
+                        $porcentajeIncentivo = IncentivosHistorial::whereBetween('fecha_indice', [$inicioMesActual . " 00:00:00",  $finMesActual . " 23:59:59"])->where('user_id', $userId)->first();
+                        if ($porcentajeIncentivo) {
+                            $response["porcentaje"] = $porcentajeIncentivo->porcentaje ? ($porcentajeIncentivo->porcentaje  / 100) :  0.18;
+                        } else {
+                            // $ultimoPorcentaje = IncentivosHistorial::where([["user_id", "=", $userId]])->orderBy('created_at', 'desc')->first();
+                            $ultimoPorcentaje = crearIncentivosHistorial($inicioMesActual . " 10:00:00", $userId);
+                            $response["porcentaje"] = $ultimoPorcentaje->porcentaje / 100;
+                        }
+                        $response["total_credito"] += decimal($recibo_historial->factura_historial->precio * $response["porcentaje"]);
+                        $response["total"] += decimal($recibo_historial->factura_historial->precio);
                     }
                 }
             }
@@ -498,19 +512,42 @@ class LogisticaController extends Controller
                     $recibo_historial_contado->factura->cliente;
 
                     if ($recibo_historial_contado->factura) {
-                        $response["total_credito"] += $recibo_historial_contado->factura->monto;
+                        $fechaCreacionAbono = $recibo_historial_contado->factura->created_at;
+                        $inicioMesActual =  Carbon::parse($fechaCreacionAbono)->firstOfMonth()->toDateString();
+                        $finMesActual =  Carbon::parse($fechaCreacionAbono)->lastOfMonth()->toDateString();
+                        $porcentajeIncentivo = IncentivosHistorial::whereBetween('fecha_indice', [$inicioMesActual . " 00:00:00",  $finMesActual . " 23:59:59"])->where('user_id', $userId)->first();
+                        if ($porcentajeIncentivo) {
+                            $response["porcentaje"] = ($porcentajeIncentivo->porcentaje / 100);
+                        } else {
+                            // $ultimoPorcentaje = IncentivosHistorial::where([["user_id", "=", $userId]])->orderBy('created_at', 'desc')->first();
+                            $ultimoPorcentaje = crearIncentivosHistorial($inicioMesActual . " 10:00:00", $userId);
+                            $response["porcentaje"] = ($ultimoPorcentaje->porcentaje / 100);
+                        }
+
+                        $response["total_contado"] += decimal($recibo_historial_contado->factura->monto);
+                        $response["total"] += decimal($recibo_historial_contado->factura->monto);
                     }
                 }
             }
 
+            // $response["total_credito"] = decimal($response["total_credito"]);
+            // $response["total_contado"] = decimal($response["total_contado"]);
+            // $response["total"] = decimal($response["total_contado"] + $response["total_credito"]);
 
 
-            $response["total_credito"] = number_format($response["total_credito"], 2, ".", "");
-            $response["total_contado"] = number_format($response["total_contado"], 2, ".", "");
-            $response["total"]         = number_format($response["total_contado"] + $response["total_credito"], 2, ".", "");
-            $response["porcentaje20"]  = number_format($response["total"] * 0.20, 2, ".", "");
+            // if ($request['userId'] == 5) {
+            //     $response["porcentaje"]  = 0.20;
+            //     $response["porcentaje20"]  = decimal($response["total"] * $response["porcentaje"]);
+            // } else {
+            //     // $response["porcentaje20"]  = decimal($response["total"] * $response["porcentaje"]);
+            // }
 
+            // $response["porcentaje20"]  = decimal($response["total"] * $porcentajeIncentivo->porcentaje);
+
+            $response["porcentaje20"]  = decimal($response["total_contado"] + $response["total_credito"]);
             $response["recibo"]        = $recibo;
+            // $response["porcentaje"] =  $response["porcentaje"] *100;
+
         }
         return response()->json($response, 200);
     }

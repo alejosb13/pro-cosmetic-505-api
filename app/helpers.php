@@ -6,6 +6,7 @@ use App\Models\ClientesReactivados;
 use App\Models\Factura;
 use App\Models\Factura_Detalle;
 use App\Models\FacturaHistorial;
+use App\Models\IncentivosHistorial;
 use App\Models\Meta;
 use App\Models\MetaHistorial;
 use App\Models\MetaRecuperacion;
@@ -982,7 +983,7 @@ function convertTazaCambio($monto)
 
 function decimal($monto)
 {
-    return number_format((float) ($monto), 2, ".", "");
+    return (float) number_format((float) ($monto), 2, ".", "");
 }
 
 function productosVendidos($request)
@@ -1055,4 +1056,19 @@ function productosVendidos($request)
     // $response["id"] = $idProductos;
 
     return $response;
+}
+
+function crearIncentivosHistorial($fechaIndice, $userId)
+{
+    $ultimoPorcentaje = IncentivosHistorial::where([["user_id", "=", $userId]])->orderBy('created_at', 'desc')->first();
+
+    $incentivo = IncentivosHistorial::create([
+        'user_id' => $userId,
+        'porcentaje' => $ultimoPorcentaje->porcentaje,
+        'fecha_indice' => $fechaIndice,
+        'estado' => 1,
+    ]);
+
+    $incentivoCreated = IncentivosHistorial::find($incentivo->id)->first();
+    return $incentivoCreated;
 }
